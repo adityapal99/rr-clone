@@ -1,26 +1,142 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------
+ * Design tokens — a restrained, monochrome palette in the spirit of
+ * rolls-roycemotorcars.com: near-pure black grounds, hairline greys,
+ * a single light-weight display face carried at large tracked sizes.
+ * ------------------------------------------------------------------ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --rr-black: #000000;
+  --rr-panel: #0d0d0d;
+  --rr-panel-raised: #151515;
+  --rr-ink: #ffffff;
+  --rr-muted: rgba(255, 255, 255, 0.64);
+  --rr-faint: rgba(255, 255, 255, 0.4);
+  --rr-hairline: rgba(255, 255, 255, 0.16);
+  --rr-hairline-strong: rgba(255, 255, 255, 0.28);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-rr-black: var(--rr-black);
+  --color-rr-panel: var(--rr-panel);
+  --color-rr-panel-raised: var(--rr-panel-raised);
+  --color-rr-ink: var(--rr-ink);
+  --color-rr-muted: var(--rr-muted);
+  --color-rr-faint: var(--rr-faint);
+  --color-rr-hairline: var(--rr-hairline);
+  --color-rr-hairline-strong: var(--rr-hairline-strong);
+  --font-display: var(--font-jost);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--rr-black);
+  color: var(--rr-ink);
+  font-family: var(--font-display), Helvetica, Arial, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Hide the native cursor only once the liquid-glass cursor has confirmed
+   a fine pointer + hover capability (class is toggled from JS). */
+.liquid-cursor-active,
+.liquid-cursor-active * {
+  cursor: none !important;
+}
+
+/* ---------------------------------------------------------------------
+ * Liquid glass cursor
+ *
+ * Same split as the nav pill: this is only the tint + rim. The bending
+ * is useLiquidGlassRefraction, wired to the shell element in
+ * LiquidGlassCursor and rebaked whenever the shell resizes — default
+ * circle, hover bump, or docked capsule all get the same treatment, at
+ * every size, all the time.
+ * ------------------------------------------------------------------ */
+.liquid-glass-shell {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.14),
+    rgba(179, 179, 179, 0.08)
+  );
+  box-shadow:
+    0 10px 26px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(9px) saturate(1.5) brightness(1.1);
+  /* Chromium can leave an SVG-referenced backdrop-filter painted at its
+     previous box size after a resize — layout is correct immediately,
+     the pixels aren't. Promoting the element to its own compositing
+     layer keeps the filtered backdrop properly invalidated as the shell
+     morphs between its default/hover/docked sizes. */
+  will-change: backdrop-filter;
+  transition:
+    width 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-glass-shell {
+    backdrop-filter: none;
+    background: rgba(24, 24, 24, 0.82);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-glass-shell,
+  .liquid-glass-nav {
+    transition-duration: 0ms;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Liquid glass navigation pill
+ *
+ * The CSS here is only the tint and the rim (three inset highlights that
+ * read as a polished edge) — colorless by design, so the hue comes
+ * through the panel from whatever is actually behind it, never from the
+ * tint itself. The bending is a *separate* layer: useLiquidGlassRefraction
+ * bakes a per-element displacement map (lib/liquid-glass-refraction.ts)
+ * and overwrites `backdrop-filter` inline with `url(#id)` on Chromium.
+ * The `blur()+saturate()` below is what stays in effect everywhere else —
+ * a real fallback, not a placeholder.
+ * ------------------------------------------------------------------ */
+.liquid-glass-nav {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06),
+    rgba(179, 179, 179, 0.06)
+  );
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(18px) saturate(1.5) brightness(1.05);
+  /* See .liquid-glass-shell — keeps the filtered backdrop from going
+     stale as the pill widens/narrows on scroll. */
+  will-change: backdrop-filter;
+  transition: max-width 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-glass-nav {
+    backdrop-filter: none;
+    background: rgba(16, 16, 16, 0.86);
+  }
 }

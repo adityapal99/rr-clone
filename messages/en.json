@@ -1,0 +1,103 @@
+{
+  "meta": {
+    "title": "Trends Garments — Crafted for Professionals",
+    "description": "Premium uniform solutions tailored for modern businesses. Academic, hospitality, healthcare, industrial and security uniforms, manufactured in the UAE."
+  },
+  "a11y": {
+    "skipToContent": "Skip to main content",
+    "openMenu": "Menu",
+    "closeMenu": "Close",
+    "primaryNav": "Primary navigation",
+    "collectionsNav": "Collections navigation"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "About Us",
+    "products": "Products",
+    "services": "Services",
+    "contact": "Contact Us"
+  },
+  "header": {
+    "cta": "Contact Us"
+  },
+  "hero": {
+    "headline": "Crafted for Professionals.",
+    "subheadline": "Premium uniform solutions tailored for modern businesses",
+    "cta": "Learn More"
+  },
+  "panels": {
+    "products": {
+      "title": "Crafted Collections",
+      "cta": "Explore Products"
+    },
+    "services": {
+      "title": "Tailored Solutions",
+      "cta": "Explore Services"
+    }
+  },
+  "explore": {
+    "eyebrow": "Explore Further",
+    "heading": "Continue the Experience",
+    "viewCollection": "View Collection"
+  },
+  "categories": {
+    "academic": {
+      "name": "Academic Uniforms",
+      "kicker": "Collection 01"
+    },
+    "hospitality": {
+      "name": "Hospitality Uniforms",
+      "kicker": "Collection 02"
+    },
+    "healthcare": {
+      "name": "Healthcare Uniforms",
+      "kicker": "Collection 03"
+    },
+    "industrial": {
+      "name": "Industrial Uniforms",
+      "kicker": "Collection 04"
+    },
+    "security": {
+      "name": "Security Uniforms",
+      "kicker": "Collection 05"
+    }
+  },
+  "story": {
+    "precision": {
+      "index": "01",
+      "title": "Crafted With Precision",
+      "body": "Every uniform is developed with meticulous attention to detail, combining refined tailoring, premium materials, and modern craftsmanship to create apparel that represents professionalism at every level."
+    },
+    "brand": {
+      "index": "02",
+      "title": "Designed Around Your Brand",
+      "body": "Uniforms are more than functional garments — they are an extension of business identity. We create custom apparel solutions that strengthen brand presence through consistency, comfort, and elevated visual appeal."
+    },
+    "manufacturing": {
+      "index": "03",
+      "title": "Advanced Manufacturing Standards",
+      "body": "Our production process combines skilled craftsmanship, modern technologies, and scalable manufacturing capabilities to deliver consistent quality for businesses across diverse industries in the UAE."
+    }
+  },
+  "contact": {
+    "heading": "Contact Us",
+    "addressLabel": "Address",
+    "addressLines": [
+      "Ajman Industrial Area 2, Beirut Street",
+      "PO. Box: 9306",
+      "United Arab Emirates"
+    ],
+    "phoneLabel": "Phone",
+    "phone": "(+971) 509690956",
+    "emailLabel": "Email",
+    "email": "info@trendsgarments.com"
+  },
+  "footer": {
+    "legal": "© {year} trendsgarments.com"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "ar": "العربية"
+  }
+}

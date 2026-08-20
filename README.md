@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Trends Garments
 
-## Getting Started
+A Next.js (App Router) + TypeScript rebuild of the Trends Garments marketing
+site: the copy and structure come from the original site, restyled in the
+dark, editorial design language of rolls-roycemotorcars.com, with a custom
+"liquid glass" cursor and full English/Arabic (RTL) internationalization.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router, Turbopack, typed routes)
+- **TypeScript**, strict mode
+- **Tailwind CSS v4**
+- **next-intl** for i18n/routing (`/`, `/ar`) — see `i18n/` and `messages/`
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 (English) or http://localhost:3000/ar (Arabic).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build   # production build + typecheck
+npm run lint    # ESLint
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Project structure
 
-## Learn More
+```
+app/[locale]/       Root layout + the single home page
+components/
+  cursor/           The liquid-glass cursor (LiquidGlassCursor + its SVG filter)
+  layout/           Header, fullscreen nav overlay, footer, locale switcher
+  sections/         Hero, split panels, category grid, story blocks, contact
+  ui/               Small shared primitives (scroll-reveal, category icons)
+i18n/               next-intl routing, navigation helpers, request config
+lib/content.ts      Structural content (image URLs, hrefs, category order)
+messages/           en.json / ar.json — all translatable copy
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Adding a locale
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Add the locale code to `i18n/routing.ts` (`locales`, and `rtlLocales` if
+   it reads right-to-left).
+2. Copy `messages/en.json` to `messages/<locale>.json` and translate every
+   key — the TypeScript types in `global.d.ts` will flag anything missing.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Adding a uniform category
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Add an entry to the `categories` array in `lib/content.ts` (id, icon key,
+gradient), a matching icon case in `components/ui/CategoryIcon.tsx`, and a
+`categories.<id>` block in every file under `messages/`.
