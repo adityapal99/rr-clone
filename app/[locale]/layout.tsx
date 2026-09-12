@@ -56,6 +56,12 @@ export default async function LocaleLayout({
       lang={locale}
       dir={isRtlLocale(locale) ? "rtl" : "ltr"}
       className={`${jost.variable} h-full antialiased`}
+      // Browser extensions (password managers, Grammarly, automation tools,
+      // etc.) commonly inject attributes onto <html> before React hydrates.
+      // That's a client-side-only change React can never predict from the
+      // server render, so it's the documented use case for this escape
+      // hatch — see https://react.dev/link/hydration-mismatch.
+      suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-rr-black text-rr-ink">
         <NextIntlClientProvider>

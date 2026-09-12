@@ -8,7 +8,9 @@
     "openMenu": "القائمة",
     "closeMenu": "إغلاق",
     "primaryNav": "التنقل الرئيسي",
-    "collectionsNav": "تنقل المجموعات"
+    "menuDetail": "تفاصيل القائمة",
+    "sectionNav": "التنقل بين الأقسام",
+    "goToSection": "الانتقال إلى {label}"
   },
   "nav": {
     "home": "الرئيسية",
@@ -16,6 +18,30 @@
     "products": "المنتجات",
     "services": "الخدمات",
     "contact": "اتصل بنا"
+  },
+  "menu": {
+    "index": "التنقل",
+    "viewSection": "الانتقال إلى القسم",
+    "home": {
+      "eyebrow": "نظرة عامة",
+      "caption": "حرفية تليق بالمحترفين"
+    },
+    "about": {
+      "eyebrow": "الورشة",
+      "caption": "الدقة والهوية والإنتاج"
+    },
+    "products": {
+      "eyebrow": "المجموعات",
+      "caption": "خمس مجموعات من الأزياء الموحدة"
+    },
+    "services": {
+      "eyebrow": "قدراتنا",
+      "caption": "حلول متكاملة مصممة خصيصاً"
+    },
+    "contact": {
+      "eyebrow": "الاستفسارات",
+      "caption": "عجمان، الإمارات العربية المتحدة"
+    }
   },
   "header": {
     "cta": "اتصل بنا"
@@ -90,7 +116,17 @@
     "phoneLabel": "الهاتف",
     "phone": "(+971) 509690956",
     "emailLabel": "البريد الإلكتروني",
-    "email": "info@trendsgarments.com"
+    "email": "info@trendsgarments.com",
+    "form": {
+      "nameLabel": "الاسم",
+      "emailLabel": "البريد الإلكتروني",
+      "phoneLabel": "الهاتف (اختياري)",
+      "messageLabel": "الرسالة",
+      "submit": "إرسال الرسالة",
+      "submitting": "جارٍ الإرسال…",
+      "success": "شكراً لتواصلكم — سنتواصل معكم قريباً.",
+      "error": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+    }
   },
   "footer": {
     "legal": "© {year} trendsgarments.com"

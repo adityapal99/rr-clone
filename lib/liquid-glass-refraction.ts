@@ -91,6 +91,36 @@ let defs: SVGSVGElement | null = null;
 let nextId = 0;
 
 /**
+ * Cap on how many filter DOM nodes (exact w/h/radius/viewport/config match)
+ * stay cached at once. Idle entries (refs back to 0, e.g. after an unhover)
+ * are kept rather than torn down immediately — see releaseFilter — so a
+ * re-hover of the same shape is a cache hit. This bounds how many can pile
+ * up: the cursor and nav pill each only ever have a handful of distinct
+ * shapes in real use (default dot, a docked capsule per interactive
+ * element's footprint, the large-hover circle), so this is generous.
+ */
+const MAX_CACHED_FILTER_NODES = 24;
+
+/** Bump `key` to most-recently-used position (Map iteration is insertion order). */
+function touchFilterEntry(key: string, entry: FilterEntry): void {
+  filters.delete(key);
+  filters.set(key, entry);
+}
+
+/** Evict the oldest *idle* (refs <= 0) entry once the cache is full. Never
+ * tears down something still on screen (refs > 0). */
+function evictIdleFilterIfNeeded(): void {
+  if (filters.size < MAX_CACHED_FILTER_NODES) return;
+  for (const [k, e] of filters) {
+    if (e.refs <= 0) {
+      filters.delete(k);
+      e.node.remove();
+      return;
+    }
+  }
+}
+
+/**
  * Backdrop-filters referencing SVG filters are Chromium-only. Feature
  * queries can't tell (Safari parses but paints nothing), so gate on engine.
  */
@@ -229,6 +259,72 @@ function buildDisplacementMap(
   return { mapUrl: canvas.toDataURL("image/png"), scale };
 }
 
+interface BakedMap {
+  mapUrl: string;
+  scale: number;
+}
+
+/**
+ * buildDisplacementMap's nested pixel loop + synchronous toDataURL() is the
+ * expensive part of a bake. A CSS-driven size transition (e.g. the cursor's
+ * dock/undock, or the nav pill's expand/collapse) fires a ResizeObserver
+ * signal on nearly every frame of the transition, and every distinct exact
+ * (w, h) pair used to mean a full rebake — including re-hovering a shape
+ * that had already been baked moments earlier, since releaseFilter used to
+ * tear the old entry down the instant it was unhovered.
+ *
+ * This cache reuses a raster across *nearby* sizes: keyed on w/h/radius
+ * quantized to a coarse bucket (plus the viewport and config, which also
+ * affect the field), a hit skips the pixel loop and toDataURL() entirely.
+ * The exact-geometry SVG attributes (margins, feImage width/height) are
+ * still computed fresh from the live w/h in acquireFilter — only the raster
+ * itself is shared, accepting a few px of resample stretch that the
+ * following feGaussianBlur pass already makes imperceptible.
+ */
+const bakeCache = new Map<string, BakedMap>();
+const MAX_BAKE_CACHE_ENTRIES = 24;
+const QUANT_SIZE_PX = 4;
+const QUANT_RADIUS_PX = 2;
+const QUANT_VIEWPORT_PX = 20;
+
+function quantize(value: number, step: number): number {
+  return Math.round(value / step) * step;
+}
+
+function getBakedMap(
+  w: number,
+  h: number,
+  radius: number,
+  pageW: number,
+  pageH: number,
+  cfg: LiquidGlassConfig,
+): BakedMap {
+  const bucketKey = [
+    quantize(w, QUANT_SIZE_PX),
+    quantize(h, QUANT_SIZE_PX),
+    quantize(radius, QUANT_RADIUS_PX),
+    quantize(pageW, QUANT_VIEWPORT_PX),
+    quantize(pageH, QUANT_VIEWPORT_PX),
+    JSON.stringify(cfg),
+  ].join("|");
+
+  const cached = bakeCache.get(bucketKey);
+  if (cached) {
+    // Bump to most-recently-used.
+    bakeCache.delete(bucketKey);
+    bakeCache.set(bucketKey, cached);
+    return cached;
+  }
+
+  const baked = buildDisplacementMap(w, h, radius, pageW, pageH, cfg);
+  bakeCache.set(bucketKey, baked);
+  if (bakeCache.size > MAX_BAKE_CACHE_ENTRIES) {
+    const oldestKey = bakeCache.keys().next().value;
+    if (oldestKey !== undefined) bakeCache.delete(oldestKey);
+  }
+  return baked;
+}
+
 function ensureDefs(): SVGSVGElement {
   if (!defs || !defs.isConnected) {
     const svgNs = "http://www.w3.org/2000/svg";
@@ -259,12 +355,15 @@ function acquireFilter(
   // shared defs <svg> was ever detached, its url(#id) no longer resolves.
   if (entry && entry.node.isConnected) {
     entry.refs++;
+    touchFilterEntry(key, entry);
     return entry;
   }
   if (entry) {
     filters.delete(key);
+    entry.node.remove();
   }
-  const { mapUrl, scale } = buildDisplacementMap(w, h, radius, pageW, pageH, cfg);
+  evictIdleFilterIfNeeded();
+  const { mapUrl, scale } = getBakedMap(w, h, radius, pageW, pageH, cfg);
   const id = `liquid-glass-${nextId++}`;
 
   const svgNs = "http://www.w3.org/2000/svg";
@@ -317,10 +416,12 @@ function acquireFilter(
 
 function releaseFilter(key: string): void {
   const entry = filters.get(key);
-  if (entry && --entry.refs <= 0) {
-    filters.delete(key);
-    entry.node.remove();
-  }
+  if (!entry) return;
+  entry.refs = Math.max(0, entry.refs - 1);
+  // Idle entries (refs back to 0) are deliberately kept rather than torn
+  // down immediately — a shape that was just unhovered is exactly the one
+  // most likely to be re-hovered next. Eviction happens lazily, in
+  // acquireFilter, once the cache is actually full.
 }
 
 /**

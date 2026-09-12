@@ -8,7 +8,9 @@
     "openMenu": "Menu",
     "closeMenu": "Close",
     "primaryNav": "Primary navigation",
-    "collectionsNav": "Collections navigation"
+    "menuDetail": "Menu detail",
+    "sectionNav": "Section navigation",
+    "goToSection": "Go to {label}"
   },
   "nav": {
     "home": "Home",
@@ -16,6 +18,30 @@
     "products": "Products",
     "services": "Services",
     "contact": "Contact Us"
+  },
+  "menu": {
+    "index": "Navigate",
+    "viewSection": "Go to section",
+    "home": {
+      "eyebrow": "Overview",
+      "caption": "Crafted for Professionals"
+    },
+    "about": {
+      "eyebrow": "The Atelier",
+      "caption": "Precision, Brand, Production"
+    },
+    "products": {
+      "eyebrow": "Collections",
+      "caption": "Five Uniform Collections"
+    },
+    "services": {
+      "eyebrow": "Capabilities",
+      "caption": "Tailored End to End"
+    },
+    "contact": {
+      "eyebrow": "Enquiries",
+      "caption": "Ajman, United Arab Emirates"
+    }
   },
   "header": {
     "cta": "Contact Us"
@@ -90,7 +116,17 @@
     "phoneLabel": "Phone",
     "phone": "(+971) 509690956",
     "emailLabel": "Email",
-    "email": "info@trendsgarments.com"
+    "email": "info@trendsgarments.com",
+    "form": {
+      "nameLabel": "Name",
+      "emailLabel": "Email",
+      "phoneLabel": "Phone (optional)",
+      "messageLabel": "Message",
+      "submit": "Send Message",
+      "submitting": "Sending…",
+      "success": "Thanks — we'll be in touch soon.",
+      "error": "Something went wrong. Please try again."
+    }
   },
   "footer": {
     "legal": "© {year} trendsgarments.com"

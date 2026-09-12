@@ -1,11 +1,18 @@
-import { useTranslations } from "next-intl";
-import { categories, logoImage, primaryNav } from "@/lib/content";
+import { useLocale, useTranslations } from "next-intl";
+import { categories, contactLinks, logoImage, primaryNav } from "@/lib/content";
+import { isRtlLocale } from "@/i18n/routing";
 
 export function SiteFooter() {
   const tNav = useTranslations("nav");
   const tCategories = useTranslations("categories");
+  const tContact = useTranslations("contact");
   const tFooter = useTranslations("footer");
   const year = new Date().getFullYear();
+  const addressLines = tContact.raw("addressLines") as string[];
+  // Same reasoning as ContactSection: pin phone/email dir="ltr" so the
+  // numerals/address always read left-to-right, with text-align following
+  // the actual page direction instead of Tailwind's rtl:/ltr: variants.
+  const numeralAlign = isRtlLocale(useLocale()) ? "text-right" : "text-left";
 
   return (
     <footer className="border-t border-rr-hairline bg-rr-black">
@@ -48,6 +55,39 @@ export function SiteFooter() {
               </a>
             ))}
           </nav>
+
+          <div className="col-span-2 flex flex-col gap-4 sm:col-span-1">
+            <div>
+              <span className="text-[11px] tracking-[0.2em] text-rr-faint uppercase">
+                {tContact("addressLabel")}
+              </span>
+              <address className="mt-2 text-[11px] leading-relaxed text-rr-muted not-italic">
+                {addressLines.map((line) => (
+                  <span key={line} className="block">
+                    {line}
+                  </span>
+                ))}
+              </address>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <a
+                href={contactLinks.phoneHref}
+                data-cursor="interactive"
+                dir="ltr"
+                className={`text-[11px] text-rr-muted transition-colors hover:text-rr-ink ${numeralAlign}`}
+              >
+                {tContact("phone")}
+              </a>
+              <a
+                href={contactLinks.emailHref}
+                data-cursor="interactive"
+                dir="ltr"
+                className={`text-[11px] text-rr-muted transition-colors hover:text-rr-ink ${numeralAlign}`}
+              >
+                {tContact("email")}
+              </a>
+            </div>
+          </div>
         </div>
 
         <div

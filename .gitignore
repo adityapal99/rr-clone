@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local-only asset sources (4K masters, .blend files) — not shipped
+/assets/

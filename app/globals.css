@@ -53,50 +53,142 @@ body {
 }
 
 /* ---------------------------------------------------------------------
- * Liquid glass cursor
+ * Pinned sections + the measuring-tape scroll rail
  *
- * Same split as the nav pill: this is only the tint + rim. The bending
- * is useLiquidGlassRefraction, wired to the shell element in
- * LiquidGlassCursor and rebaked whenever the shell resizes — default
- * circle, hover bump, or docked capsule all get the same treatment, at
- * every size, all the time.
+ * A `.pinned-track` is taller than the viewport and holds a sticky,
+ * viewport-height `.pinned-inner`; the surplus track height is how far
+ * you scroll while the content stays put. ScrollProgressProvider writes
+ * `--section-progress` (0 → 1) onto the active track and
+ * `--rail-progress` onto <html>, so everything below animates from a
+ * custom property and scrolling never re-renders React.
  * ------------------------------------------------------------------ */
-.liquid-glass-shell {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.14),
-    rgba(179, 179, 179, 0.08)
-  );
-  box-shadow:
-    0 10px 26px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.16),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(9px) saturate(1.5) brightness(1.1);
-  /* Chromium can leave an SVG-referenced backdrop-filter painted at its
-     previous box size after a resize — layout is correct immediately,
-     the pixels aren't. Promoting the element to its own compositing
-     layer keeps the filtered backdrop properly invalidated as the shell
-     morphs between its default/hover/docked sizes. */
-  will-change: backdrop-filter;
-  transition:
-    width 420ms cubic-bezier(0.16, 1, 0.3, 1),
-    height 420ms cubic-bezier(0.16, 1, 0.3, 1),
-    border-radius 420ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+.pinned-inner {
+  /* A section is fully in view the moment progress hits 0 — so there is no
+     fade *in*. Instead the content drifts gently across the whole hold and
+     recedes only over the last fifth, reading as a hand-off to the section
+     coming next rather than as a frozen frame. */
+  --pin-exit: clamp(0, calc((var(--section-progress, 0) - 0.8) / 0.2), 1);
+  --pin-drift: calc(var(--section-progress, 0) * -18px);
 }
 
-@media (prefers-reduced-transparency: reduce) {
-  .liquid-glass-shell {
-    backdrop-filter: none;
-    background: rgba(24, 24, 24, 0.82);
-  }
+.pin-content {
+  opacity: calc(1 - 0.55 * var(--pin-exit));
+  transform: translate3d(0, var(--pin-drift), 0);
+  will-change: transform, opacity;
+}
+
+/* The oversized ghosted numerals drift counter to the content, for depth. */
+.pin-counter {
+  transform: translate3d(0, calc(var(--section-progress, 0) * 20px), 0);
+}
+
+/* Scroll progress as a tailor's measuring tape: uniform gradations, drawn
+   once faint and once bright, the bright copy clipped down to the scroll
+   position. Both copies read `--rail-progress` directly, which is why
+   scrolling this never re-renders React. */
+.tape-ticks {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    var(--rr-hairline) 0,
+    var(--rr-hairline) 1px,
+    transparent 1px,
+    transparent 8px
+  );
+}
+
+.tape-reveal {
+  clip-path: inset(0 0 calc((1 - var(--rail-progress, 0)) * 100%) 0);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.7) 0,
+    rgba(255, 255, 255, 0.7) 1px,
+    transparent 1px,
+    transparent 8px
+  );
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .liquid-glass-shell,
+  /* Drop the pinning entirely and return to plain document flow — no tall
+     tracks, no sticky hold, no progress-driven motion. */
+  .pinned-track {
+    height: auto;
+  }
+  .pinned-inner {
+    position: static;
+    height: auto;
+    min-height: 100svh;
+    overflow: visible;
+  }
+  .pin-content,
+  .pin-counter {
+    opacity: 1;
+    transform: none;
+    will-change: auto;
+  }
+}
+
+/* Escape hatch for genuinely short viewports (landscape phones, small
+   laptops). `.pinned-inner` is `overflow: hidden` so a section taller than
+   the viewport would be clipped rather than scrollable — the tightest case
+   is the collections grid, which is three rows tall between `sm` and `lg`.
+   Below this height, stop pinning and let the page scroll normally instead
+   of hiding content. */
+@media (max-height: 700px) {
+  .pinned-track {
+    height: auto;
+  }
+  .pinned-inner {
+    position: static;
+    height: auto;
+    min-height: 100svh;
+    overflow: visible;
+  }
+  .pin-content,
+  .pin-counter {
+    opacity: 1;
+    transform: none;
+    will-change: auto;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Cursor — hollow ring
+ *
+ * Previously a "liquid glass" shell: a live SVG-refraction backdrop-filter
+ * (feImage → feDisplacementMap → feGaussianBlur), moved via translate3d on
+ * every pointer move. Caching fixed how often that filter got *rebaked*,
+ * but a live SVG-displacement backdrop-filter still costs real GPU time to
+ * *recomposite* every frame it moves, regardless of bake frequency — and a
+ * pointer-following element is the one thing on the page guaranteed to move
+ * on nearly every frame. So the cursor is transform + a radial gradient
+ * only now: cheap at any size, on any hardware. (The nav pill below keeps
+ * the glass effect — it's static except during its own resize transitions,
+ * not continuously in motion the way the cursor is.)
+ *
+ * A hollow ring rather than a filled disc: a solid white border for a crisp
+ * edge, plus a soft ~5px glow bleeding inward from it. That inward glow is
+ * an *inset box-shadow*, not a centered radial-gradient, so the bleed hugs
+ * the circle at every point instead of only where a gradient's elliptical
+ * falloff happens to land. Hollow is also what keeps a label readable
+ * straight through the ring when it passes over a button.
+ *
+ * Only two sizes now (see LiquidGlassCursor), always circular — so the
+ * radius never animates, and `will-change` names just the three properties
+ * that do.
+ * ------------------------------------------------------------------ */
+.simple-cursor {
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.55);
+  will-change: width, height, transform;
+  transition:
+    width 240ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 240ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .simple-cursor,
   .liquid-glass-nav {
     transition-duration: 0ms;
   }
@@ -138,5 +230,129 @@ body {
   .liquid-glass-nav {
     backdrop-filter: none;
     background: rgba(16, 16, 16, 0.86);
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * Mega menu
+ *
+ * Two motions, both pure CSS so the overlay never animates from JS.
+ *
+ * 1. `.rr-menu-item` — the staggered rise used for the rail, the detail
+ *    column and the preview caption. Each element carries its own `--i`
+ *    ordinal and derives its delay from it, so a whole column comes in
+ *    as one sweep. The animation replays by *remounting*: NavOverlay
+ *    keys the overlay body on an open counter and the detail column on
+ *    the active group, which is cheaper and far more reliable than
+ *    toggling classes to restart an animation.
+ *
+ * 2. `.rr-menu-frame` — the preview stack. Every photo the menu can show
+ *    is stacked in the same box; NavOverlay marks exactly one frame
+ *    `current` and at most one `previous`, and the selectors below do the
+ *    rest. An idle frame waits one full width off to the inline start
+ *    with its photo held large and pushed the other way. Promoting it to
+ *    `current` slides it in to cover the box while the photo inside
+ *    settles back to rest over a longer beat — so the incoming picture
+ *    travels *over* the outgoing one (still sitting at `previous`,
+ *    drifting slightly out) rather than dissolving through the ground,
+ *    and its leading edge reads as a wipe. The two durations differ on
+ *    purpose: the frame lands first, the photograph keeps moving.
+ *
+ *    `--rr-frame-from` flips for RTL so the slide always begins at the
+ *    inline start — the seam it shares with the navigation half.
+ *
+ * Dropping back to idle is deliberately un-transitioned: it only ever
+ * happens underneath an opaque `current` frame, so there is nothing to
+ * animate and no flash to hide.
+ *
+ * 3. `.rr-menu-wash` — the same stack again, blurred, behind the
+ *    navigation half, so both halves of the menu are lit by the same
+ *    photograph. The blur lives on this wrapper rather than on the
+ *    images so it never competes with the frames' own transforms, and
+ *    the wrapper is scaled well past its box so the blur's soft edges
+ *    fall outside the clip instead of showing as a seam.
+ * ------------------------------------------------------------------ */
+.rr-menu-item {
+  animation: rr-menu-rise 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 55ms + 80ms);
+}
+
+@keyframes rr-menu-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rr-menu-frame {
+  --rr-frame-from: -100%;
+  --rr-media-from: 18%;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  transform: translate3d(var(--rr-frame-from), 0, 0);
+}
+
+[dir="rtl"] .rr-menu-frame {
+  --rr-frame-from: 100%;
+  --rr-media-from: -18%;
+}
+
+.rr-menu-frame-media {
+  transform: translate3d(var(--rr-media-from), 0, 0) scale(1.12);
+  transition: transform 1500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rr-menu-frame[data-state="previous"] {
+  z-index: 1;
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.rr-menu-frame[data-state="previous"] .rr-menu-frame-media {
+  transform: translate3d(0, 0, 0) scale(1.05);
+}
+
+.rr-menu-frame[data-state="current"] {
+  z-index: 2;
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rr-menu-frame[data-state="current"] .rr-menu-frame-media {
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+/* Deliberately a tint, not a fill. The navigation sits on this, and the
+   eyebrows and numerals are drawn at 40% white — a strongly coloured
+   photograph (the red hospitality uniform is the worst case) floods the
+   half and takes their contrast with it. Held down by brightness first
+   and opacity second, with saturation barely above neutral, so what
+   comes through is the photograph's colour rather than its light. */
+.rr-menu-wash {
+  filter: blur(64px) saturate(1.15) brightness(0.45);
+  opacity: 0.3;
+  transform: scale(1.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rr-menu-item {
+    animation: none;
+  }
+  .rr-menu-frame {
+    transform: translate3d(0, 0, 0);
+  }
+  .rr-menu-frame[data-state="current"] {
+    transition: none;
+  }
+  .rr-menu-frame-media {
+    transform: none;
+    transition: none;
   }
 }
