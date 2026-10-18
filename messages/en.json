@@ -125,7 +125,8 @@
       "submit": "Send Message",
       "submitting": "Sending…",
       "success": "Thanks — we'll be in touch soon.",
-      "error": "Something went wrong. Please try again."
+      "error": "Something went wrong. Please try again.",
+      "tooManyRequests": "Too many messages from this device. Please try again in a few minutes."
     }
   },
   "footer": {

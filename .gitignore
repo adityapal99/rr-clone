@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+!supabase/functions/.env.example
 
 # vercel
 .vercel
@@ -42,3 +44,4 @@ next-env.d.ts
 
 # local-only asset sources (4K masters, .blend files) — not shipped
 /assets/
+.secrets

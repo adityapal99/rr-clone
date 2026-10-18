@@ -30,5 +30,11 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    // A separate Deno codebase (its own runtime, globals, and npm:/jsr:
+    // import resolution via each function's own deno.json) -- type-checked
+    // by `deno check` / `npm run test:functions`, not by this project's tsc.
+    "supabase/functions"
+  ]
 }

@@ -2,37 +2,27 @@
 
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
-import { useLiquidGlassRefraction } from "@/hooks/useLiquidGlassRefraction";
 import { logoImage } from "@/lib/content";
 import { NavOverlay } from "./NavOverlay";
 
 /**
- * A floating, pill-shaped liquid-glass navigation bar — see
- * `.liquid-glass-nav` in globals.css for the tint/rim, and
- * useLiquidGlassRefraction for the bending itself: a displacement map
- * baked from the bar's own size and radius, run against the *real*
- * backdrop via `backdrop-filter: url(#id)`. What's actually behind the
- * bar warps at its rim — a photo's edges bow along their own contours —
- * rather than the bar wearing a flat white "glassmorphism" sheen on top
- * of a blur.
+ * A full-width hairline bar across the top of the page, in the spirit of
+ * rolls-roycemotorcars.com: while the hero is still in view it is nothing
+ * but a rule and the wordmark laid over the photography. Once the page
+ * scrolls under it, it gains a frosted panel and compacts — the rule
+ * strengthens, the padding tightens, the wordmark steps down a size — so
+ * the controls stay legible against whatever is passing behind them.
  *
- * Compact and centered at the top of the page; widens toward the full
- * inset width once the page scrolls, while staying fully rounded — the
- * refraction map rebakes automatically as it does, since it's already
- * watching the pill's size via ResizeObserver.
+ * The frosting is a plain `backdrop-filter: blur()` that exists only in
+ * the scrolled state (see `.site-bar` in globals.css). It replaces an
+ * earlier floating pill whose backdrop was a baked SVG displacement map
+ * rebuilt on every resize; nothing on the page reads as warped glass now,
+ * which is the point — the reference bar is a line, not an object.
  *
- * Known Chromium quirk: if the page loads already scrolled (a hard
- * refresh, a back/forward restore) the `max-width` transition can start
- * pinned to its pre-scroll value instead of animating, even though the
- * class and layout are both already correct — it self-corrects on the
- * next real scroll, so it's a cosmetic one-frame issue on a narrow path
- * rather than a stuck state.
- *
- * Rendered as a sibling of the pill's own decorative layers, not a
- * child: the pill's `backdrop-filter` establishes a new containing
- * block for `position: fixed` descendants, which would otherwise
- * collapse the fullscreen nav overlay to the pill's own height instead
- * of the viewport.
+ * The nav overlay is rendered as a sibling of the bar, not a child: a
+ * `backdrop-filter` establishes a new containing block for
+ * `position: fixed` descendants, which would otherwise collapse the
+ * fullscreen overlay to the bar's own height instead of the viewport.
  */
 export function SiteHeader() {
   const tA11y = useTranslations("a11y");
@@ -46,7 +36,6 @@ export function SiteHeader() {
   // and replay the staggered rise. Counted here rather than in the overlay
   // because a click handler is the honest place to advance it.
   const [openCount, setOpenCount] = useState(0);
-  const pillRef = useLiquidGlassRefraction<HTMLElement>();
   const toggleRef = useRef<HTMLButtonElement>(null);
   const wasOpen = useRef(false);
 
@@ -93,7 +82,7 @@ export function SiteHeader() {
       <div
         id="top"
         inert={open}
-        className={`fixed inset-x-0 top-4 z-50 flex justify-center px-4 transition-[translate,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none sm:top-6 ${
+        className={`fixed inset-x-0 top-0 z-50 transition-[translate,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none ${
           open ? "-translate-y-32 opacity-0" : "translate-y-0 opacity-100"
         }`}
       >
@@ -104,11 +93,12 @@ export function SiteHeader() {
           {tA11y("skipToContent")}
         </a>
 
-        <header
-          ref={pillRef}
-          className={`liquid-glass-nav w-full rounded-full ${scrolled ? "max-w-6xl" : "max-w-3xl"}`}
-        >
-          <div className="relative grid grid-cols-[auto_1fr_auto] items-center gap-3 py-2 pe-2 ps-4 sm:gap-4 sm:py-2.5 sm:pe-2.5 sm:ps-6">
+        <header className={`site-bar ${scrolled ? "is-scrolled" : ""}`}>
+          <div
+            className={`relative grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 transition-[padding] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none sm:gap-4 sm:px-8 lg:px-12 ${
+              scrolled ? "py-3 sm:py-3.5" : "py-5 sm:py-7"
+            }`}
+          >
             <button
               ref={toggleRef}
               type="button"
@@ -140,7 +130,9 @@ export function SiteHeader() {
             <img
               src={logoImage.src}
               alt="Trends Garments"
-              className="h-5 w-auto justify-self-center brightness-0 invert sm:h-6"
+              className={`w-auto justify-self-center brightness-0 invert transition-[height] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none ${
+                scrolled ? "h-5" : "h-6 sm:h-8"
+              }`}
             />
 
             <a

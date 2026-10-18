@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "@supabase/functions-js": "jsr:@supabase/functions-js@2.116.0",
+    "@supabase/server": "npm:@supabase/server@1.6.0",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.116.0",
+    "write-excel-file/universal": "npm:write-excel-file@4.1.1/universal",
+    "@std/encoding/base64": "jsr:@std/encoding@1/base64"
+  }
+}

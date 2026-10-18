@@ -161,9 +161,9 @@ body {
  * *recomposite* every frame it moves, regardless of bake frequency — and a
  * pointer-following element is the one thing on the page guaranteed to move
  * on nearly every frame. So the cursor is transform + a radial gradient
- * only now: cheap at any size, on any hardware. (The nav pill below keeps
- * the glass effect — it's static except during its own resize transitions,
- * not continuously in motion the way the cursor is.)
+ * only now: cheap at any size, on any hardware. (The site bar below once
+ * kept that effect; it is a plain blur now, and the displacement-map
+ * engine is gone from the project entirely.)
  *
  * A hollow ring rather than a filled disc: a solid white border for a crisp
  * edge, plus a soft ~5px glow bleeding inward from it. That inward glow is
@@ -189,47 +189,46 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .simple-cursor,
-  .liquid-glass-nav {
+  .site-bar {
     transition-duration: 0ms;
   }
 }
 
 /* ---------------------------------------------------------------------
- * Liquid glass navigation pill
+ * Site bar
  *
- * The CSS here is only the tint and the rim (three inset highlights that
- * read as a polished edge) — colorless by design, so the hue comes
- * through the panel from whatever is actually behind it, never from the
- * tint itself. The bending is a *separate* layer: useLiquidGlassRefraction
- * bakes a per-element displacement map (lib/liquid-glass-refraction.ts)
- * and overwrites `backdrop-filter` inline with `url(#id)` on Chromium.
- * The `blur()+saturate()` below is what stays in effect everywhere else —
- * a real fallback, not a placeholder.
+ * Two states, and the hairline rule is the only thing common to both: at
+ * the top of the page the bar is the rule and nothing else, so the hero
+ * runs clean underneath it; scrolled, it fills with a frosted panel and
+ * the rule strengthens.
+ *
+ * `backdrop-filter` appears only in the scrolled state deliberately. An
+ * always-on one composites a blurred copy of the strip behind the bar on
+ * every frame of every scroll — including the whole stretch at the top
+ * where there is nothing behind it worth blurring.
+ *
+ * The fill is near-black rather than a white sheen: this bar sits over
+ * photography that is already dark-graded, and a light "glassmorphism"
+ * tint would read as a grey smear across the top of every frame.
  * ------------------------------------------------------------------ */
-.liquid-glass-nav {
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.06),
-    rgba(179, 179, 179, 0.06)
-  );
-  box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.38),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(18px) saturate(1.5) brightness(1.05);
-  /* See .liquid-glass-shell — keeps the filtered backdrop from going
-     stale as the pill widens/narrows on scroll. */
-  will-change: backdrop-filter;
-  transition: max-width 500ms cubic-bezier(0.16, 1, 0.3, 1);
+.site-bar {
+  border-bottom: 1px solid var(--rr-hairline);
+  transition:
+    background-color 500ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 500ms cubic-bezier(0.16, 1, 0.3, 1),
+    backdrop-filter 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.site-bar.is-scrolled {
+  background-color: rgba(8, 8, 8, 0.55);
+  border-bottom-color: var(--rr-hairline-strong);
+  backdrop-filter: blur(20px) saturate(1.4);
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .liquid-glass-nav {
+  .site-bar.is-scrolled {
     backdrop-filter: none;
-    background: rgba(16, 16, 16, 0.86);
+    background-color: rgba(10, 10, 10, 0.94);
   }
 }
 

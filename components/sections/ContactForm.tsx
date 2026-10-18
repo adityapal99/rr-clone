@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 
-type Status = "idle" | "submitting" | "success" | "error";
+type Status = "idle" | "submitting" | "success" | "error" | "rate-limited";
 
 /**
  * Underlined field matching the site's hairline/uppercase-label aesthetic
@@ -73,13 +73,32 @@ function StatusMessage({ children, role }: { children: ReactNode; role: "status"
 }
 
 /**
- * A basic contact form: name, email, phone (optional), message. Posts to
- * `/api/contact` (see app/api/contact/route.ts) — that route is a stub for
- * now (validates + logs), meant to be swapped for a real Supabase call
- * later without this component needing to change at all.
+ * Honeypot field: a bot filling in every input on the page fills this one
+ * too; a sighted, mouse/keyboard-using visitor never sees or tabs into it.
+ * Offscreen (not `display:none`) because some bots skip display:none
+ * fields, and NOT `required` -- browsers refuse to submit a form with a
+ * hidden required field, which would silently break the form for everyone.
+ * The route (app/api/contact/route.ts) treats a non-empty value here as a
+ * bot and reports success without persisting anything.
+ */
+function HoneypotField() {
+  return (
+    <div aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
+      <label htmlFor="company">Company</label>
+      <input id="company" name="company" type="text" tabIndex={-1} autoComplete="off" />
+    </div>
+  );
+}
+
+/**
+ * Contact form: name, email, phone (optional), message. Posts to
+ * `/api/contact` (see app/api/contact/route.ts), which persists into
+ * Supabase, from where a trigger + cron sweep send a WhatsApp notification
+ * and a daily job emails a spreadsheet of the previous day's leads.
  */
 export function ContactForm() {
   const t = useTranslations("contact");
+  const locale = useLocale();
   const [status, setStatus] = useState<Status>("idle");
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -93,6 +112,8 @@ export function ContactForm() {
       email: String(formData.get("email") ?? ""),
       phone: String(formData.get("phone") ?? ""),
       message: String(formData.get("message") ?? ""),
+      locale,
+      company: String(formData.get("company") ?? ""),
     };
 
     try {
@@ -101,6 +122,10 @@ export function ContactForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      if (response.status === 429) {
+        setStatus("rate-limited");
+        return;
+      }
       if (!response.ok) throw new Error(`Request failed: ${response.status}`);
       setStatus("success");
       form.reset();
@@ -114,7 +139,9 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} noValidate={false} className="flex flex-col gap-6">
+    <form onSubmit={handleSubmit} noValidate={false} className="relative flex flex-col gap-6">
+      <HoneypotField />
+
       <Field id="name" label={t("form.nameLabel")} required />
       <Field id="email" label={t("form.emailLabel")} type="email" required />
       <Field id="phone" label={t("form.phoneLabel")} type="tel" />
@@ -130,6 +157,9 @@ export function ContactForm() {
       </button>
 
       {status === "error" && <StatusMessage role="alert">{t("form.error")}</StatusMessage>}
+      {status === "rate-limited" && (
+        <StatusMessage role="alert">{t("form.tooManyRequests")}</StatusMessage>
+      )}
     </form>
   );
 }
